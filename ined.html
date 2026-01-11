@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Arduino 2-Wheel Bot!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .presentation-container {
+            width: 90vw;
+            height: 90vh;
+            max-width: 1600px;
+            max-height: 900px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .presentation-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .presentation-content {
+            height: calc(100% - 100px);
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            height: 100%;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.8em;
+            margin-bottom: 30px;
+            text-align: center;
+            animation: bounce 1s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        h2 {
+            color: #764ba2;
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .slide-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            height: 100%;
+        }
+
+        .text-content {
+            padding-right: 20px;
+            overflow-y: auto;
+        }
+
+        .image-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Enhanced Bot Animation Container */
+        .bot-animation-container {
+            width: 500px;
+            height: 350px;
+            position: relative;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .bot-track {
+            position: absolute;
+            bottom: 60px;
+            width: 90%;
+            height: 4px;
+            background: linear-gradient(90deg, #333 0%, #666 100%);
+            border-radius: 2px;
+            left: 5%;
+        }
+
+        .bot-track::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: trackShine 2s linear infinite;
+        }
+
+        @keyframes trackShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .animated-bot {
+            position: absolute;
+            bottom: 30px;
+            left: 50px;
+            transition: left 0.5s ease, transform 0.3s ease;
+        }
+
+        .bot-body-animated {
+            width: 180px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px 15px 5px 5px;
+            position: relative;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            border: 4px solid white;
+        }
+
+        .bot-body-animated::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .wheel-animated {
+            width: 60px;
+            height: 60px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+            bottom: -30px;
+            border: 5px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .wheel-animated-left {
+            left: 20px;
+        }
+
+        .wheel-animated-right {
+            right: 20px;
+        }
+
+        .wheel-spoke {
+            position: absolute;
+            width: 4px;
+            height: 30px;
+            background: #667eea;
+            top: 50%;
+            left: 50%;
+            transform-origin: center;
+        }
+
+        .wheel-spoke:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg); }
+        .wheel-spoke:nth-child(2) { transform: translate(-50%, -50%) rotate(45deg); }
+        .wheel-spoke:nth-child(3) { transform: translate(-50%, -50%) rotate(90deg); }
+        .wheel-spoke:nth-child(4) { transform: translate(-50%, -50%) rotate(135deg); }
+
+        .bot-led {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #00ff00;
+            top: 15px;
+            box-shadow: 0 0 10px #00ff00;
+            animation: ledPulse 2s infinite;
+        }
+
+        @keyframes ledPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .led-left {
+            left: 30px;
+            background: #00ff00;
+        }
+
+        .led-right {
+            right: 30px;
+            background: #ff4444;
+            animation-delay: 1s;
+        }
+
+        .movement-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .movement-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .movement-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            background: #764ba2;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .component-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s;
+            border-left: 5px solid #667eea;
+        }
+
+        .component-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .step {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .circuit-diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid #667eea;
+        }
+
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+
+        .highlight {
+            color: #61afef;
+        }
+
+        .fun-fact {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 5px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .bot-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .bot-type-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border-top: 5px solid #667eea;
+        }
+
+        .bot-type-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .bot-icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .keyboard-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            animation: fadeInOut 3s infinite;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .key {
+            background: white;
+            color: #667eea;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .slide-counter {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2em;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .wire-animation {
+            height: 3px;
+            background: #667eea;
+            margin: 10px 0;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .sparkle {
+            display: inline-block;
+            animation: sparkle 1.5s infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .slide-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .text-content {
+                padding-right: 0;
+            }
+            
+            h1 {
+                font-size: 2.2em;
+            }
+            
+            h2 {
+                font-size: 1.8em;
+            }
+            
+            .bot-animation-container {
+                width: 100%;
+                max-width: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .presentation-header {
+                padding: 15px;
+            }
+            
+            .presentation-content {
+                height: calc(100% - 90px);
+                padding: 20px;
+            }
+            
+            .keyboard-hint {
+                display: none;
+            }
+            
+            .bot-animation-container {
+                height: 250px;
+            }
+            
+            .bot-body-animated {
+                width: 140px;
+                height: 80px;
+            }
+            
+            .wheel-animated {
+                width: 50px;
+                height: 50px;
+                bottom: -25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="presentation-header">
+            <h1 style="color: white; font-size: 1.6em; margin: 0;">🤖 Arduino 2-Wheel Bot Builder</h1>
+            <div class="slide-counter" id="slideCounter">Slide 1 of 13</div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+        
+        <div class="presentation-content">
+            <!-- Slide 1: Welcome -->
+            <div class="slide active" id="slide1">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h1>Build Your Own Arduino 2-Wheel Bot! 🚗</h1>
+                        <p style="font-size: 1.3em; line-height: 1.6; margin-bottom: 30px;">
+                            Welcome to the exciting world of robotics! In this presentation, you'll learn how to build your very own Arduino-powered robot that can move around, follow commands, and even be upgraded with sensors.
+                        </p>
+                        <div class="info-box">
+                            <strong>🎯 What is a Robot?</strong>
+                            <p style="margin-top: 10px;">A robot is a machine—especially one programmable by a computer—capable of carrying out a complex series of actions automatically. Robots can be guided by an external control device or the control may be embedded within.</p>
+                        </div>
+                        <p style="margin-top: 30px; font-size: 1.1em; color: #666;">
+                            <strong>Navigation:</strong> Use <span class="key">←</span> and <span class="key">→</span> arrow keys to navigate between slides
+                        </p>
+                    </div>
+                    <div class="image-content">
+                        <div class="bot-animation-container">
+                            <div class="bot-track"></div>
+                            <div class="animated-bot" id="mainBot">
+                                <div class="bot-body-animated">
+                                    <div class="bot-led led-left"></div>
+                                    <div class="bot-led led-right"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-left">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-right">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="movement-controls">
+                            <button class="movement-btn" onclick="moveBot('forward')">⬆️ Forward</button>
+                            <button class="movement-btn" onclick="moveBot('backward')">⬇️ Backward</button>
+                            <button class="movement-btn" onclick="moveBot('left')">⬅️ Left</button>
+                            <button class="movement-btn" onclick="moveBot('right')">➡️ Right</button>
+                            <button class="movement-btn" onclick="moveBot('reset')">🔄 Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: What are Bots? -->
+            <div class="slide" id="slide2">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🤖 Understanding Bots & Robotics</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Bots (short for robots) are automated machines that perform tasks. They range from simple mechanical devices to complex AI-powered systems.
+                        </p>
+                        
+                        <div class="bot-types-grid">
+                            <div class="bot-type-card">
+                                <span class="bot-icon">🏭</span>
+                                <h3>Industrial Bots</h3>
+                                <p>Used in manufacturing for assembly, welding, painting, and material handling. Precise and reliable.</p>
+                            </div>
+                            
+                            <div class="bot-type-card">
+                                <span class="bot-icon">🏥</span>
+                                <h3>Medical Bots</h3>
+                                <p>Assist in surgeries, rehabilitation, patient care, and medication delivery. Highly precise.</p>
+                            </div>
+                            
+                            <div class="bot-type-card">
+                                <span class="bot-icon">🚗</span>
+                                <h3>Autonomous Vehicles</h3>
+                                <p>Self-driving cars, drones, and delivery robots that navigate without human intervention.</p>
+                            </div>
+                            
+                            <div class="bot-type-card">
+                                <span class="bot-icon">🎮</span>
+                                <h3>Educational Bots</h3>
+                                <p>Like our Arduino bot - designed for learning robotics, programming, and electronics.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>🔍 Key Characteristics of Bots:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li><strong>Sensing:</strong> Ability to perceive environment (sensors)</li>
+                                <li><strong>Processing:</strong> Brain to make decisions (microcontroller)</li>
+                                <li><strong>Actuation:</strong> Ability to move or affect environment (motors)</li>
+                                <li><strong>Power:</strong> Energy source to operate (batteries)</li>
+                                <li><strong>Programmability:</strong> Can be instructed to perform tasks</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div class="component-card" style="width: 100%; max-width: 400px;">
+                            <div style="font-size: 5em; color: #667eea; margin-bottom: 20px;">🤖</div>
+                            <div style="font-weight: bold; color: #667eea; font-size: 1.5em;">Why Build Bots?</div>
+                            <p style="margin-top: 15px; line-height: 1.6;">
+                                Building bots teaches you:<br>
+                                • Programming logic<br>
+                                • Electronics fundamentals<br>
+                                • Mechanical design<br>
+                                • Problem-solving skills<br>
+                                • Innovation mindset
+                            </p>
+                        </div>
+                        <div class="fun-fact" style="margin-top: 30px; width: 100%; max-width: 400px;">
+                            <strong>💡 Did You Know?</strong>
+                            <p>The word "robot" comes from the Czech word "robota" meaning "forced labor". It was first used in a 1920 play by Karel Čapek.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Types of Mobile Bots -->
+            <div class="slide" id="slide3">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🚗 Types of Mobile Robots</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Mobile robots can move around in their environment and are classified by their locomotion method.
+                        </p>
+                        
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <strong>Wheeled Robots</strong><br>
+                            Most common type. Can have 2, 3, 4, or more wheels. Our Arduino bot is a 2-wheel differential drive robot.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <strong>Tracked Robots</strong><br>
+                            Use continuous tracks (like tanks). Excellent for rough terrain and climbing obstacles.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <strong>Legged Robots</strong><br>
+                            Walk on legs (2, 4, 6, or more). Can navigate uneven terrain but complex to build and control.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <strong>Flying Robots</strong><br>
+                            Drones and quadcopters. Can fly and hover but require complex stabilization.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <strong>Swimming Robots</strong><br>
+                            Underwater robots for exploration, research, or rescue missions.
+                        </div>
+                        
+                        <div class="info-box" style="margin-top: 20px;">
+                            <strong>🎯 Why 2-Wheel Bots?</strong>
+                            <p style="margin-top: 10px;">2-wheel robots are perfect for beginners because they're simple to build, easy to program, and teach fundamental concepts like balance (some need gyroscopes), motor control, and basic navigation.</p>
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div class="bot-animation-container">
+                            <div class="bot-track"></div>
+                            <div class="animated-bot" id="comparisonBot">
+                                <div class="bot-body-animated">
+                                    <div class="bot-led led-left"></div>
+                                    <div class="bot-led led-right"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-left">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-right">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; margin-top: 20px;">
+                            <div style="background: #667eea; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 1.5em;">🔄</div>
+                                <div style="font-weight: bold;">Differential Drive</div>
+                                <p>Each wheel controlled independently</p>
+                            </div>
+                            <div style="background: #764ba2; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 1.5em;">⚖️</div>
+                                <div style="font-weight: bold;">Simple Design</div>
+                                <p>Easy to build and maintain</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: What is Arduino? -->
+            <div class="slide" id="slide4">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🔌 What is Arduino?</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Arduino is an open-source electronics platform based on easy-to-use hardware and software. It's designed to make electronics accessible to artists, designers, hobbyists, and anyone interested in creating interactive objects or environments.
+                        </p>
+                        <div class="component-card" style="margin: 20px 0;">
+                            <div style="font-size: 1.3em; color: #667eea; font-weight: bold; margin-bottom: 10px;">Arduino is like a tiny computer brain!</div>
+                            <p>It can read inputs (like light, temperature, or button presses) and turn them into outputs (like activating motors, turning on LEDs, or publishing data online).</p>
+                        </div>
+                        <div class="fun-fact">
+                            <strong>💡 Fun Fact:</strong> The name "Arduino" comes from a bar in Ivrea, Italy, where some of the project's founders used to meet.
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div class="component-card" style="width: 100%; max-width: 400px;">
+                            <div style="font-size: 8em; color: #667eea; margin-bottom: 20px;">🧠</div>
+                            <div style="font-weight: bold; color: #667eea; font-size: 1.5em;">Arduino Board</div>
+                            <p>The brain of your robot project</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Components Needed -->
+            <div class="slide" id="slide5">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🛠️ What You'll Need</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            To build your 2-wheel Arduino bot, you'll need the following components. Most of these are readily available from electronics suppliers or online stores.
+                        </p>
+                        
+                        <div class="component-grid">
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">🧠</div>
+                                <div style="font-weight: bold; color: #667eea;">Arduino Uno</div>
+                                <p>The brain of your robot</p>
+                            </div>
+                            
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">⚙️</div>
+                                <div style="font-weight: bold; color: #667eea;">Two DC Motors</div>
+                                <p>Make the wheels spin</p>
+                            </div>
+                            
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">🎛️</div>
+                                <div style="font-weight: bold; color: #667eea;">Motor Driver L298N</div>
+                                <p>Controls the motors</p>
+                            </div>
+                            
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">🛞</div>
+                                <div style="font-weight: bold; color: #667eea;">Two Wheels & Chassis</div>
+                                <p>Make your bot roll</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <div class="component-card">
+                                <div style="font-weight: bold; color: #667eea;">Additional Items:</div>
+                                <p>• Battery Pack (6-12V)<br>
+                                • Jumper Wires (male-to-male and male-to-female)<br>
+                                • Screwdriver and basic tools</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px;">
+                            <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em; color: #667eea;">🔋</div>
+                                <div style="font-weight: bold; color: #667eea;">Battery</div>
+                            </div>
+                            <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em; color: #667eea;">🔌</div>
+                                <div style="font-weight: bold; color: #667eea;">Wires</div>
+                            </div>
+                            <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em; color: #667eea;">🔧</div>
+                                <div style="font-weight: bold; color: #667eea;">Tools</div>
+                            </div>
+                            <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em; color: #667eea;">📦</div>
+                                <div style="font-weight: bold; color: #667eea;">Chassis</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: How It Works -->
+            <div class="slide" id="slide6">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>⚡ How Does It Work?</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Understanding the flow of control in your robot is key to building and programming it successfully.
+                        </p>
+                        
+                        <div class="circuit-diagram">
+                            <h3 style="color: #667eea; margin-bottom: 20px;">The Control Flow</h3>
+                            <div style="text-align: center; margin: 30px 0;">
+                                <div style="display: flex; align-items: center; justify-content: space-around; margin-bottom: 30px;">
+                                    <div style="text-align: center;">
+                                        <div style="width: 100px; height: 100px; background: #667eea; border-radius: 15px; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">Arduino</div>
+                                        <p style="margin-top: 10px; font-weight: bold;">Brain</p>
+                                    </div>
+                                    <div class="wire-animation" style="width: 80px;"></div>
+                                    <div style="text-align: center;">
+                                        <div style="width: 100px; height: 100px; background: #764ba2; border-radius: 15px; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">Motor Driver</div>
+                                        <p style="margin-top: 10px; font-weight: bold;">Controller</p>
+                                    </div>
+                                    <div class="wire-animation" style="width: 80px;"></div>
+                                    <div style="text-align: center;">
+                                        <div style="width: 100px; height: 100px; background: #00a8cc; border-radius: 15px; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">Motors</div>
+                                        <p style="margin-top: 10px; font-weight: bold;">Actuators</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 30px;">
+                            <p style="font-size: 1.1em; line-height: 1.8;">
+                                <span class="sparkle">✨</span> <strong>Step 1:</strong> You write code in Arduino IDE and upload it to the Arduino board<br>
+                                <span class="sparkle">✨</span> <strong>Step 2:</strong> Arduino processes the code and sends signals to the Motor Driver<br>
+                                <span class="sparkle">✨</span> <strong>Step 3:</strong> Motor Driver amplifies the signals and controls the motor power<br>
+                                <span class="sparkle">✨</span> <strong>Step 4:</strong> Motors spin at the desired speed and direction, moving your bot!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div style="width: 100%; max-width: 400px;">
+                            <div style="background: #667eea; color: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                                <div style="font-size: 2em;">💻</div>
+                                <div style="font-weight: bold;">Arduino IDE</div>
+                                <p>Write and upload code</p>
+                            </div>
+                            <div style="background: #764ba2; color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em;">⚡</div>
+                                <div style="font-weight: bold;">Power Flow</div>
+                                <p>Battery → Driver → Motors</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: Building Steps -->
+            <div class="slide" id="slide7">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🔨 Building Your Bot - Step by Step</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Follow these steps to assemble your robot. Take your time and double-check each connection.
+                        </p>
+                        
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <strong>Prepare the Chassis</strong><br>
+                            Start with your robot chassis kit. Identify where the motors will be mounted.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <strong>Attach the Motors</strong><br>
+                            Mount the two DC motors on both sides of your chassis using the provided screws or strong double-sided tape.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <strong>Connect the Wheels</strong><br>
+                            Attach one wheel to each motor shaft. Make sure they're secure and centered!
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <strong>Mount the Arduino</strong><br>
+                            Place your Arduino board on top of the chassis. You can use screws, standoffs, or double-sided tape.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <strong>Add the Motor Driver</strong><br>
+                            Attach the L298N motor driver next to the Arduino. Make sure it's secure and won't short circuit.
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">6</div>
+                            <strong>Install Battery Holder</strong><br>
+                            Mount the battery pack on the chassis. This adds weight to the bottom for better stability.
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div style="width: 100%; max-width: 400px;">
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                                <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em; color: #667eea;">1️⃣</div>
+                                </div>
+                                <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em; color: #667eea;">2️⃣</div>
+                                </div>
+                                <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em; color: #667eea;">3️⃣</div>
+                                </div>
+                                <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em; color: #667eea;">4️⃣</div>
+                                </div>
+                                <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em; color: #667eea;">5️⃣</div>
+                                </div>
+                                <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em; color: #667eea;">6️⃣</div>
+                                </div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em;">🔧</div>
+                                <div style="font-weight: bold;">Take Your Time</div>
+                                <p>Follow each step carefully and double-check your work!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: Wiring Guide -->
+            <div class="slide" id="slide8">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🔌 Wiring Connections</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Proper wiring is crucial for your robot to work correctly. Follow this diagram and connection guide carefully.
+                        </p>
+                        
+                        <div class="circuit-diagram">
+                            <h3 style="color: #667eea; margin-bottom: 20px;">Complete Wiring Diagram</h3>
+                            <div style="width: 100%; height: 200px; background: linear-gradient(45deg, #f5f7fa 25%, #e8eaf6 25%, #e8eaf6 50%, #f5f7fa 50%, #f5f7fa 75%, #e8eaf6 75%, #e8eaf6 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #667eea; font-size: 1.2em; position: relative;">
+                                <div style="position: absolute; top: 20px; left: 20px; font-size: 1.5em;">🔋</div>
+                                <div style="position: absolute; top: 20px; right: 20px; font-size: 1.5em;">🧠</div>
+                                <div style="position: absolute; bottom: 20px; left: 20px; font-size: 1.5em;">⚙️</div>
+                                <div style="position: absolute; bottom: 20px; right: 20px; font-size: 1.5em;">⚙️</div>
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5em;">🎛️</div>
+                                <div style="position: absolute; top: 50%; left: 30%; transform: translate(-50%, -50%); font-size: 1.2em;">🔌 →</div>
+                                <div style="position: absolute; top: 50%; right: 30%; transform: translate(50%, -50%); font-size: 1.2em;">← 🔌</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 30px;">
+                            <div class="component-card">
+                                <div style="font-weight: bold; color: #667eea;">Motor Driver to Arduino:</div>
+                                <p>• IN1 → Pin 9<br>
+                                • IN2 → Pin 8<br>
+                                • IN3 → Pin 7<br>
+                                • IN4 → Pin 6<br>
+                                • GND → GND</p>
+                            </div>
+                            
+                            <div class="component-card">
+                                <div style="font-weight: bold; color: #667eea;">Power Connections:</div>
+                                <p>• Battery + → Motor Driver +12V<br>
+                                • Battery - → Motor Driver GND<br>
+                                • Motor Driver +5V → Arduino 5V (optional)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div style="width: 100%; max-width: 400px;">
+                            <div style="background: #f5f7fa; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                                <div style="font-size: 3em; color: #667eea;">🔌</div>
+                                <div style="font-weight: bold; color: #667eea;">Wire Colors Matter</div>
+                                <p>Use different colors for power, ground, and signal wires</p>
+                            </div>
+                            <div style="background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 1.5em;">⚠️</div>
+                                <div style="font-weight: bold; color: #d35400;">Important</div>
+                                <p>Always double-check your connections before powering on!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: Basic Code -->
+            <div class="slide" id="slide9">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>💻 Programming Your Bot</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Now it's time to bring your robot to life with code! This basic program will make your bot move forward for 2 seconds, then stop for 1 second, and repeat.
+                        </p>
+                        
+                        <div class="code-block">
+// Motor control pins
+int motor1Pin1 = 9;  // IN1 on L298N
+int motor1Pin2 = 8;  // IN2 on L298N
+int motor2Pin1 = 7;  // IN3 on L298N
+int motor2Pin2 = 6;  // IN4 on L298N
+
+void setup() {
+  // Set all motor pins as OUTPUT
+  pinMode(motor1Pin1, OUTPUT);
+  pinMode(motor1Pin2, OUTPUT);
+  pinMode(motor2Pin1, OUTPUT);
+  pinMode(motor2Pin2, OUTPUT);
+  
+  Serial.begin(9600);  // For debugging
+  Serial.println("Robot Initialized!");
+}
+
+void loop() {
+  // Move Forward
+  Serial.println("Moving Forward...");
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+  delay(2000);  // Move for 2 seconds
+  
+  // Stop
+  Serial.println("Stopping...");
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, LOW);
+  delay(1000);  // Wait 1 second
+  
+  // You can add more movements here!
+}
+                        </div>
+                        
+                        <div class="fun-fact" style="margin-top: 20px;">
+                            <strong>📝 Tip:</strong> Copy this code into the Arduino IDE, connect your Arduino via USB, select the correct board and port, then click "Upload" to program your robot!
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div style="width: 100%; max-width: 400px;">
+                            <div style="background: #282c34; color: #61afef; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center; font-family: 'Courier New', monospace;">
+                                <div style="font-size: 2em;">💾</div>
+                                <div style="font-weight: bold;">Arduino IDE</div>
+                                <p>Tools → Board → Arduino Uno<br>Tools → Port → Select COM port</p>
+                            </div>
+                            <div style="background: #667eea; color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em;">🚀</div>
+                                <div style="font-weight: bold;">Upload Button</div>
+                                <p>Click the → arrow to upload your code!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: Movement Controls -->
+            <div class="slide" id="slide10">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🎮 Different Movements</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            By controlling each motor independently, you can make your robot perform different movements. Here's how to code the basic maneuvers.
+                        </p>
+                        
+                        <div class="component-card" style="margin-bottom: 15px;">
+                            <div style="font-weight: bold; color: #667eea;">Move Forward:</div>
+                            <p>Both motors spin forward at the same speed</p>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px; font-family: monospace;">
+                                // Left motor forward<br>
+                                digitalWrite(motor1Pin1, HIGH);<br>
+                                digitalWrite(motor1Pin2, LOW);<br>
+                                // Right motor forward<br>
+                                digitalWrite(motor2Pin1, HIGH);<br>
+                                digitalWrite(motor2Pin2, LOW);
+                            </div>
+                        </div>
+                        
+                        <div class="component-card" style="margin-bottom: 15px;">
+                            <div style="font-weight: bold; color: #667eea;">Turn Right:</div>
+                            <p>Left motor forward, right motor stopped or reverse</p>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px; font-family: monospace;">
+                                // Left motor forward<br>
+                                digitalWrite(motor1Pin1, HIGH);<br>
+                                digitalWrite(motor1Pin2, LOW);<br>
+                                // Right motor stop<br>
+                                digitalWrite(motor2Pin1, LOW);<br>
+                                digitalWrite(motor2Pin2, LOW);
+                            </div>
+                        </div>
+                        
+                        <div class="component-card">
+                            <div style="font-weight: bold; color: #667eea;">Spin in Place:</div>
+                            <p>Motors spin in opposite directions</p>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px; font-family: monospace;">
+                                // Left motor forward<br>
+                                digitalWrite(motor1Pin1, HIGH);<br>
+                                digitalWrite(motor1Pin2, LOW);<br>
+                                // Right motor backward<br>
+                                digitalWrite(motor2Pin1, LOW);<br>
+                                digitalWrite(motor2Pin2, HIGH);
+                            </div>
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div class="bot-animation-container">
+                            <div class="bot-track"></div>
+                            <div class="animated-bot" id="movementBot">
+                                <div class="bot-body-animated">
+                                    <div class="bot-led led-left"></div>
+                                    <div class="bot-led led-right"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-left">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-right">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="movement-controls">
+                            <button class="movement-btn" onclick="moveBot2('forward')">⬆️ Forward</button>
+                            <button class="movement-btn" onclick="moveBot2('backward')">⬇️ Backward</button>
+                            <button class="movement-btn" onclick="moveBot2('left')">⬅️ Left</button>
+                            <button class="movement-btn" onclick="moveBot2('right')">➡️ Right</button>
+                            <button class="movement-btn" onclick="moveBot2('reset')">🔄 Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 11: Troubleshooting -->
+            <div class="slide" id="slide11">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🔍 Troubleshooting Tips</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Having issues? Don't worry! Here are common problems and how to fix them.
+                        </p>
+                        
+                        <div class="step">
+                            <div class="step-number">!</div>
+                            <strong>Robot doesn't move at all?</strong><br>
+                            Check battery power, ensure all connections are secure, verify motor driver power LED is on
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">!</div>
+                            <strong>Moves in wrong direction?</strong><br>
+                            Swap the motor wires on the motor driver (OUT1 with OUT2 or OUT3 with OUT4)
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">!</div>
+                            <strong>Only one wheel spins?</strong><br>
+                            Check connections for the non-working motor, test the motor directly with battery
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">!</div>
+                            <strong>Code won't upload to Arduino?</strong><br>
+                            Check USB connection, select correct board (Arduino Uno) and port in Arduino IDE
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div style="width: 100%; max-width: 400px;">
+                            <div style="background: #ff6b6b; color: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                                <div style="font-size: 2em;">🔋</div>
+                                <div style="font-weight: bold;">Check Battery</div>
+                                <p>Make sure your battery is charged and connected properly</p>
+                            </div>
+                            <div style="background: #1dd1a1; color: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                                <div style="font-size: 2em;">🔌</div>
+                                <div style="font-weight: bold;">Check Connections</div>
+                                <p>Verify all wires are firmly connected</p>
+                            </div>
+                            <div style="background: #feca57; color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 2em;">💻</div>
+                                <div style="font-weight: bold;">Check Code</div>
+                                <p>Look for syntax errors in your Arduino IDE</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 12: Upgrades -->
+            <div class="slide" id="slide12">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h2>🚀 Cool Upgrades You Can Add!</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; margin-bottom: 20px;">
+                            Once you've mastered the basics, you can add sensors and modules to make your robot smarter and more capable!
+                        </p>
+                        
+                        <div class="component-grid">
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">📡</div>
+                                <div style="font-weight: bold; color: #667eea;">Ultrasonic Sensor</div>
+                                <p>Measure distance to avoid obstacles</p>
+                            </div>
+                            
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">📱</div>
+                                <div style="font-weight: bold; color: #667eea;">Bluetooth Module</div>
+                                <p>Control with smartphone app</p>
+                            </div>
+                            
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">🛤️</div>
+                                <div style="font-weight: bold; color: #667eea;">Line Follower Sensor</div>
+                                <p>Follow black lines on the ground</p>
+                            </div>
+                            
+                            <div class="component-card">
+                                <div style="font-size: 3em; color: #667eea; margin-bottom: 15px;">💡</div>
+                                <div style="font-weight: bold; color: #667eea;">LED Lights</div>
+                                <p>Add colorful indicators</p>
+                            </div>
+                        </div>
+                        
+                        <div class="fun-fact" style="margin-top: 20px;">
+                            <strong>💡 Project Ideas:</strong> Create an obstacle-avoiding robot, a line-follower, a Bluetooth-controlled car, or a light-seeking robot!
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div style="width: 100%; max-width: 400px;">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+                                <div style="font-size: 2em;">🤖</div>
+                                <div style="font-weight: bold;">Advanced Robot</div>
+                                <p>With sensors and smart features!</p>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div style="background: #5f27cd; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em;">🎯</div>
+                                    <div>Obstacle Avoidance</div>
+                                </div>
+                                <div style="background: #00d2d3; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em;">📱</div>
+                                    <div>Phone Control</div>
+                                </div>
+                                <div style="background: #ff9ff3; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em;">🛤️</div>
+                                    <div>Line Following</div>
+                                </div>
+                                <div style="background: #f368e0; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.5em;">💡</div>
+                                    <div>Light Show</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 13: Congratulations -->
+            <div class="slide" id="slide13">
+                <div class="slide-content">
+                    <div class="text-content">
+                        <h1>🎉 Congratulations! 🎉</h1>
+                        <p style="font-size: 1.3em; line-height: 1.6; margin-bottom: 30px;">
+                            You've successfully learned how to design, build, and program your own Arduino-powered 2-wheel robot! This is just the beginning of your robotics journey.
+                        </p>
+                        
+                        <div class="component-card" style="margin-bottom: 20px;">
+                            <div style="font-size: 1.4em; color: #667eea; font-weight: bold; margin-bottom: 10px;">What You've Accomplished:</div>
+                            <ul style="margin-left: 20px; line-height: 1.8; font-size: 1.1em;">
+                                <li>Learned about different types of bots and robotics</li>
+                                <li>Understood Arduino and its capabilities</li>
+                                <li>Learned about robot components and their functions</li>
+                                <li>Built a complete robot chassis with motors and wheels</li>
+                                <li>Connected and wired electronic components properly</li>
+                                <li>Programmed the robot to perform basic movements</li>
+                                <li>Learned troubleshooting techniques</li>
+                                <li>Explored advanced upgrades and next steps</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>🌟 Your Robotics Journey Continues!</strong>
+                            <p style="margin-top: 10px;">Join robotics clubs, participate in competitions, share your projects online, and keep building! Remember, every expert was once a beginner. The most important thing is to keep experimenting, keep learning, and most importantly - have fun with your creations!</p>
+                        </div>
+                    </div>
+                    <div class="image-content">
+                        <div class="bot-animation-container">
+                            <div class="bot-track"></div>
+                            <div class="animated-bot" id="finalBot" style="left: 50px;">
+                                <div class="bot-body-animated">
+                                    <div class="bot-led led-left"></div>
+                                    <div class="bot-led led-right"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-left">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                                <div class="wheel-animated wheel-animated-right">
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                    <div class="wheel-spoke"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; width: 100%; max-width: 400px; margin-top: 20px;">
+                            <div style="font-size: 2em;">🚀</div>
+                            <div style="font-weight: bold;">Keep Building!</div>
+                            <p>Your next project awaits. What will you create?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Keyboard navigation hint -->
+        <div class="keyboard-hint" id="keyboardHint">
+            Navigate with: <span class="key">←</span> <span class="key">→</span> arrow keys
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 13;
+        let wheelAnimations = [];
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            const counter = document.getElementById('slideCounter');
+            const progress = document.getElementById('progress');
+
+            if (n > totalSlides) currentSlide = totalSlides;
+            if (n < 1) currentSlide = 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+
+            counter.textContent = `Slide ${currentSlide} of ${totalSlides}`;
+            progress.style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+            // Start wheel animations when slide is shown
+            if (currentSlide === 1 || currentSlide === 3 || currentSlide === 10 || currentSlide === 13) {
+                startWheelAnimations();
+            }
+        }
+
+        function changeSlide(n) {
+            currentSlide += n;
+            showSlide(currentSlide);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') {
+                changeSlide(-1);
+            } else if (event.key === 'ArrowRight') {
+                changeSlide(1);
+            }
+        });
+
+        // Bot movement functions
+        function moveBot(direction) {
+            const bot = document.getElementById('mainBot');
+            const container = document.querySelector('.bot-animation-container');
+            const containerWidth = container.offsetWidth;
+            const botWidth = 180;
+            
+            switch(direction) {
+                case 'forward':
+                    bot.style.left = Math.min(parseInt(bot.style.left || 50) + 100, containerWidth - botWidth - 50) + 'px';
+                    bot.style.transform = 'translateY(0)';
+                    break;
+                case 'backward':
+                    bot.style.left = Math.max(parseInt(bot.style.left || 50) - 100, 50) + 'px';
+                    bot.style.transform = 'translateY(0)';
+                    break;
+                case 'left':
+                    bot.style.transform = 'translateY(-10px) rotate(-5deg)';
+                    setTimeout(() => bot.style.transform = 'translateY(0) rotate(0deg)', 300);
+                    break;
+                case 'right':
+                    bot.style.transform = 'translateY(-10px) rotate(5deg)';
+                    setTimeout(() => bot.style.transform = 'translateY(0) rotate(0deg)', 300);
+                    break;
+                case 'reset':
+                    bot.style.left = '50px';
+                    bot.style.transform = 'translateY(0) rotate(0deg)';
+                    break;
+            }
+        }
+
+        function moveBot2(direction) {
+            const bot = document.getElementById('movementBot');
+            const container = document.querySelector('#slide10 .bot-animation-container');
+            const containerWidth = container.offsetWidth;
+            const botWidth = 180;
+            
+            switch(direction) {
+                case 'forward':
+                    bot.style.left = Math.min(parseInt(bot.style.left || 50) + 100, containerWidth - botWidth - 50) + 'px';
+                    bot.style.transform = 'translateY(0)';
+                    break;
+                case 'backward':
+                    bot.style.left = Math.max(parseInt(bot.style.left || 50) - 100, 50) + 'px';
+                    bot.style.transform = 'translateY(0)';
+                    break;
+                case 'left':
+                    bot.style.transform = 'translateY(-10px) rotate(-5deg)';
+                    setTimeout(() => bot.style.transform = 'translateY(0) rotate(0deg)', 300);
+                    break;
+                case 'right':
+                    bot.style.transform = 'translateY(-10px) rotate(5deg)';
+                    setTimeout(() => bot.style.transform = 'translateY(0) rotate(0deg)', 300);
+                    break;
+                case 'reset':
+                    bot.style.left = '50px';
+                    bot.style.transform = 'translateY(0) rotate(0deg)';
+                    break;
+            }
+        }
+
+        // Wheel animation functions
+        function startWheelAnimations() {
+            // Stop any existing animations
+            stopWheelAnimations();
+            
+            // Get all wheel elements in current slide
+            const wheels = document.querySelectorAll('.wheel-spoke');
+            
+            wheels.forEach((wheel, index) => {
+                let rotation = 0;
+                const animation = setInterval(() => {
+                    rotation = (rotation + 5) % 360;
+                    wheel.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+                }, 50);
+                
+                wheelAnimations.push(animation);
+            });
+        }
+
+        function stopWheelAnimations() {
+            wheelAnimations.forEach(animation => clearInterval(animation));
+            wheelAnimations = [];
+        }
+
+        // Auto-animate the final bot
+        function animateFinalBot() {
+            const bot = document.getElementById('finalBot');
+            if (!bot) return;
+            
+            let direction = 1;
+            let position = 50;
+            
+            setInterval(() => {
+                const container = document.querySelector('#slide13 .bot-animation-container');
+                if (!container) return;
+                
+                const containerWidth = container.offsetWidth;
+                const botWidth = 180;
+                
+                position += direction * 2;
+                
+                if (position >= containerWidth - botWidth - 50) {
+                    direction = -1;
+                } else if (position <= 50) {
+                    direction = 1;
+                }
+                
+                bot.style.left = position + 'px';
+            }, 50);
+        }
+
+        // Initialize
+        showSlide(currentSlide);
+        
+        // Hide keyboard hint after 5 seconds
+        setTimeout(() => {
+            const hint = document.getElementById('keyboardHint');
+            if (hint) {
+                hint.style.opacity = '0';
+                setTimeout(() => hint.style.display = 'none', 500);
+            }
+        }, 5000);
+
+        // Start wheel animations
+        startWheelAnimations();
+        
+        // Start final bot animation when slide 13 is reached
+        setTimeout(animateFinalBot, 100);
+    </script>
+</body>
+</html>
